@@ -1,0 +1,20 @@
+{
+    "name": "lemonlyue/sensitive-words-filter",
+    "description": "过滤敏感词",
+    "authors": [
+        {
+            "name": "lemon_lyue",
+            "email": "lemon_lyue@163.com"
+        }
+    ],
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Lemonlyue\\SensitiveWordsFilter\\": "./src/"
+        }
+    },
+    "require": {
+        "phpunit/phpunit": "^9.2",
+        "mockery/mockery": "^1.4"
+    }
+}
