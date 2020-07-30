@@ -1,6 +1,6 @@
 <h1 align="center"> sensitive-words-filter </h1>
 
-<p align="center"> ?????.</p>
+<p align="center"> 基于PHP敏感词过滤</p>
 
 
 ## Installing
