@@ -2,7 +2,8 @@
 
 <p align="center"> 基于PHP敏感词过滤</p>
 
-[![Build Status](https://travis-ci.com/lemonlyue/sensitive-words-filter.svg?branch=master)](https://travis-ci.com/lemonlyue/sensitive-words-filter)
+![](https://img.shields.io/travis/com/lemonlyue/sensitive-words-filter)
+![](https://img.shields.io/github/v/tag/lemonlyue/sensitive-words-filter)
 
 ## 安装
 
