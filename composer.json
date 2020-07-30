@@ -13,7 +13,7 @@
             "Lemonlyue\\SensitiveWordsFilter\\": "./src/"
         }
     },
-    "require": {
+    "require-dev": {
         "phpunit/phpunit": "~5"
     }
 }
