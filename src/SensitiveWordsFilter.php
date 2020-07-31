@@ -4,7 +4,6 @@
 namespace Lemonlyue\SensitiveWordsFilter;
 
 
-use Lemonlyue\SensitiveWordsFilter\Exceptions\InvalidArgumentException;
 
 class SensitiveWordsFilter
 {
@@ -14,77 +13,24 @@ class SensitiveWordsFilter
     protected $dict;
 
     /**
-     * @var array 配置
-     */
-    protected $config;
-
-    /**
-     * @desc SensitiveWordsFilter constructor.
-     * @param mixed $config 相关配置
-     */
-    public function __construct($config)
-    {
-        $this->config = $config;
-    }
-
-    /**
-     * @desc 数组敏感词过滤
-     * @param string $str 需要校验的字符串
-     * @param string $level high 只要顺序包含都屏蔽 | middle 中间间隔skipDistance个字符就屏蔽 | low 全词匹配即屏蔽
-     * @param int $skipDistance 允许敏感词跳过的最大距离，如笨aa蛋a傻瓜等等
-     * @param bool $isReplace 是否需要替换，不需要的话，返回是否有敏感词，否则返回被替换的字符串
-     * @param string $replace 替换字符
-     * @return bool|string
-     * @return bool|string
-     * @throws InvalidArgumentException
-     */
-    public function arrayFilter($str, $level = 'high', $skipDistance = 4, $isReplace = true, $replace = '*')
-    {
-        $this->loadArrayData();
-        return $this->filter($str, $level, $skipDistance, $isReplace, $replace);
-    }
-
-    /**
-     * @desc txt文件敏感词过滤
-     * @param string $str 需要校验的字符串
-     * @param string $level high 只要顺序包含都屏蔽 | middle 中间间隔skipDistance个字符就屏蔽 | low 全词匹配即屏蔽
-     * @param int $skipDistance 允许敏感词跳过的最大距离，如笨aa蛋a傻瓜等等
-     * @param bool $isReplace 是否需要替换，不需要的话，返回是否有敏感词，否则返回被替换的字符串
-     * @param string $replace 替换字符
-     * @return bool|string
-     * @throws Exceptions\FileException
-     * @throws InvalidArgumentException
-     */
-    public function txtFilter($str, $level = 'high', $skipDistance = 4, $isReplace = true, $replace = '*')
-    {
-        $this->loadTxtFileData();
-        return $this->filter($str, $level, $skipDistance, $isReplace, $replace);
-    }
-
-    /**
      * @desc 加载敏感词数组
-     * @throws InvalidArgumentException
+     * @param array $data 数组
      */
-    protected function loadArrayData()
+    public function loadArrayData($data)
     {
-        if (!is_array($this->config)) {
-            throw new InvalidArgumentException('Config Invalid Argument');
-        }
-        foreach ($this->config as $value) {
+        foreach ($data as $value) {
             $this->addWords(trim($value));
         }
     }
 
     /**
+     * @desc 加载敏感词txt文件
+     * @param string $path 文件路径
      * @throws Exceptions\FileException
-     * @throws InvalidArgumentException
      */
-    protected function loadTxtFileData()
+    public function loadTxtFileData($path)
     {
-        if (!is_string($this->config)) {
-            throw new InvalidArgumentException('Config Invalid Argument');
-        }
-        $file = $this->getFile($this->config);
+        $file = $this->getFile($path);
         $arr = $file->getContent();
         foreach ($arr as $value) {
             $this->addWords(trim($value));
@@ -139,7 +85,7 @@ class SensitiveWordsFilter
      * @param string $replace 替换字符
      * @return bool|string
      */
-    protected function filter($str, $level = 'high', $skipDistance = 4, $isReplace = true, $replace = '*')
+    public function filter($str, $level = 'high', $skipDistance = 4, $isReplace = true, $replace = '*')
     {
         //允许跳过的最大距离
         if ($level === 'high') {
