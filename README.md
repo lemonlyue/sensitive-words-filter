@@ -3,7 +3,6 @@
 <p align="center"> 基于PHP敏感词过滤</p>
 
 ![](https://img.shields.io/travis/com/lemonlyue/sensitive-words-filter)
-![](https://img.shields.io/github/v/tag/lemonlyue/sensitive-words-filter)
 
 ## 安装
 
@@ -14,33 +13,47 @@ $ composer require lemonlyue/sensitive-words-filter -vvv
 ## 使用
 
 ### 数组方式
+
 ```php
 require __DIR__.'/vendor/autoload.php';
 
-$arr = [
-    '傻逼',
-    '滚滚滚'
-];
-$filter = new \Lemonlyue\SensitiveWordsFilter\SensitiveWordsFilter($arr);
-echo $filter->arrayFilter('傻逼.', 'middle');
+$filter = new \Lemonlyue\SensitiveWordsFilter\SensitiveWordsFilter();
+$filter->loadArrayData([
+    'sb'
+]);
+echo $filter->filter('sb吧', 'middle');
 ```
 
 ### txt文本方式
+
 ```php
 require __DIR__.'/vendor/autoload.php';
 
-$filter = new \Lemonlyue\SensitiveWordsFilter\SensitiveWordsFilter('test.txt');
-echo $filter->txtFilter('傻逼.');
+$filter = new \Lemonlyue\SensitiveWordsFilter\SensitiveWordsFilter();
+$filter->loadTxtData('test.txt');
+echo $filter->filter('sb吧', 'middle');
 ```
 
 test.txt
 ```txt
-傻逼
-滚滚滚
+sb
 ```
 
 ## 参数说明
-`arrayFilter`、`txtFilter`方法参数相同，参数如下表：
+
+`loadArrayData`方法参数相同，参数如下表：
+
+|  参数 | 类型 | 默认值 | 可选值 | 说明 |
+| ----  | ---- | --- | --- | --- |
+|  data  | array | | | 敏感词数组 |
+
+`loadTxtData`方法参数相同，参数如下表：
+
+|  参数 | 类型 | 默认值 | 可选值 | 说明 |
+| ----  | ---- | --- | --- | --- |
+|  path  | string | | | 敏感词文件路径 |
+
+`filter`方法参数相同，参数如下表：
 
 |  参数 | 类型 | 默认值 | 可选值 | 说明 |
 | ----  | ---- | --- | --- | --- |
