@@ -37,6 +37,7 @@ echo $filter->filter('sb吧', 'middle');
 test.txt
 ```txt
 sb
+mlgb
 ```
 
 ## 参数说明
