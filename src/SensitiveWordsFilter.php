@@ -3,51 +3,178 @@
 
 namespace Lemonlyue\SensitiveWordsFilter;
 
+use Lemonlyue\SensitiveWordsFilter\Exceptions\InvalidArgumentException;
+use Lemonlyue\SensitiveWordsFilter\Loader\DictLoaderInterface;
+use Lemonlyue\SensitiveWordsFilter\Loader\FileDictLoader;
 
 
+/**
+ * Class SensitiveWordsFilter
+ * @package Lemonlyue\SensitiveWordsFilter
+ */
 class SensitiveWordsFilter
 {
     /**
-     * @var string 敏感词字典
+     * Dict loader
+     *
+     * @var DictLoaderInterface $loader
+     */
+    protected $loader;
+
+    /**
+     * @var string $config
+     */
+    protected $config = '';
+
+    /**
+     * @var array Sensitive word dictionary
      */
     protected $dict;
 
+    /** @var int $level */
+    protected $level = SensitiveWordConstants::LEVEL_MIDDLE;
+
+    /** @var string $replaceString */
+    protected $replaceString = '*';
+
+    /** @var array $sensitiveWordsDict */
+    protected $sensitiveWordsDict;
+
     /**
-     * @desc 加载敏感词数组
-     * @param array $data 数组
+     * SensitiveWordsFilter constructor.
+     * @param string $config
+     * @param string $loaderName
      */
-    public function loadArrayData($data)
+    public function __construct($config = '', $loaderName = '')
     {
-        foreach ($data as $value) {
+        $this->loader = $loaderName ?: FileDictLoader::class;
+        $this->config = $config;
+    }
+
+    /**
+     * Return dict loader
+     *
+     * @return DictLoaderInterface|mixed
+     * @throws InvalidArgumentException
+     */
+    public function getLoader()
+    {
+        if (!file_exists($this->loader)) {
+            throw new InvalidArgumentException('Invalid Loader.');
+        }
+        if (!($this->loader instanceof DictLoaderInterface)) {
+            $loaderName = $this->loader;
+            if (empty($this->config)) {
+                throw new InvalidArgumentException('Invalid Config.');
+            }
+            $this->loader = new $loaderName($this->config);
+        }
+
+        return $this->loader;
+    }
+
+    /**
+     * Loader setter
+     *
+     * @param DictLoaderInterface $loader
+     * @return $this
+     */
+    public function setLoader(DictLoaderInterface $loader)
+    {
+        $this->loader = $loader;
+
+        return $this;
+    }
+
+    /**
+     * convert
+     *
+     * @param string $string
+     * @param int $skipDistance
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public function convert($string, $skipDistance = 4)
+    {
+        if (empty($this->sensitiveWordsDict)) {
+            $this->buildDict();
+        }
+        return $this->filter($string, $this->level, $skipDistance, true, $this->replaceString);
+    }
+
+    /**
+     * has sensitive words.
+     *
+     * @param $string
+     * @return bool
+     */
+    public function hasSensitiveWords($string)
+    {
+        return $this->filter($string, $this->level, 0, true, $this->replaceString);
+    }
+
+    /**
+     * build dict.
+     *
+     * @return mixed
+     * @throws InvalidArgumentException
+     */
+    public function buildDict()
+    {
+        /** @var DictLoaderInterface $loader */
+        $loader = $this->getLoader();
+        $loader->loadDict();
+        $dict = $loader->getDict();
+        return $this->build($dict);
+    }
+
+    /**
+     * build sensitive words dict.
+     *
+     * @param array $dict
+     * @return array
+     */
+    protected function build($dict)
+    {
+        foreach ($dict as $value) {
             $this->addWords(trim($value));
         }
+        return $this->dict;
     }
 
     /**
-     * @desc 加载敏感词txt文件
-     * @param string $path 文件路径
-     * @throws Exceptions\FileException
+     * sensitive words dict setter.
+     *
+     * @param $dict
      */
-    public function loadTxtFileData($path)
+    public function setSensitiveWordsDict($dict)
     {
-        $file = $this->getFile($path);
-        $arr = $file->getContent();
-        foreach ($arr as $value) {
-            $this->addWords(trim($value));
-        }
+        $this->sensitiveWordsDict = $dict;
     }
 
     /**
-     * @param string $path
-     * @return TxtFile
+     * level setter
+     *
+     * @param $level
      */
-    protected function getFile($path)
+    public function setLevel($level)
     {
-        return new TxtFile($path);
+        $this->level = $level;
     }
 
     /**
-     * @desc 添加敏感词到节点
+     * replace string setter
+     *
+     * @param $string
+     */
+    public function setReplaceString($string)
+    {
+        $this->replaceString = $string;
+    }
+
+    /**
+     * add sensitive words to node.
+     *
      * @param string $word
      */
     protected function addWords($word)
@@ -60,70 +187,73 @@ class SensitiveWordsFilter
             }
             $curNode = &$curNode[$char];
         }
-        // 敏感词节点的终点
+        // The node at the end of
         $curNode['end'] = true;
     }
 
     /**
-     * @desc 切割字符串
+     * split string.
+     *
      * @param string $str
      * @return array|false|string[]
      */
     protected function splitStr($str)
     {
-        //将字符串分割成组成它的字符
-        // 其中/u 表示按unicode(utf-8)匹配（主要针对多字节比如汉字），否则默认按照ascii码容易出现乱码
         return preg_split("//u", $str, -1, PREG_SPLIT_NO_EMPTY);
     }
 
     /**
-     * @desc 敏感词过滤
-     * @param string $str 需要校验的字符串
-     * @param string $level high 只要顺序包含都屏蔽 | middle 中间间隔skipDistance个字符就屏蔽 | low 全词匹配即屏蔽
-     * @param int $skipDistance 允许敏感词跳过的最大距离，如笨aa蛋a傻瓜等等
-     * @param bool $isReplace 是否需要替换，不需要的话，返回是否有敏感词，否则返回被替换的字符串
-     * @param string $replace 替换字符
+     * @desc Sensitive word filtering
+     * @param string $str String to be verified
+     * @param string $level High as long as sequence contains all shielding | skipDistance characters among middle interval would block | low whole word matching the shielding
+     * @param int $skipDistance The maximum distance that sensitive words are allowed to skip
+     * @param bool $isReplace Whether to replace, if not, returns whether there are sensitive words, otherwise returns the replaced string
+     * @param string $replace Substitution characters
      * @return bool|string
      */
-    public function filter($str, $level = 'high', $skipDistance = 4, $isReplace = true, $replace = '*')
+    public function filter($str, $level, $skipDistance, $isReplace, $replace)
     {
-        //允许跳过的最大距离
-        if ($level === 'high') {
-            $maxDistance = strlen($str) + 1;
-        } elseif ($level === 'middle') {
-            $maxDistance = max($skipDistance, 0) + 1;
-        } else {
-            $maxDistance = 2;
+        // Maximum distance allowed to jump
+        switch ($level) {
+            case SensitiveWordConstants::LEVEL_HIGHT:
+                $maxDistance = strlen($str) + 1;
+                break;
+            case SensitiveWordConstants::LEVEL_MIDDLE:
+                $maxDistance = max($skipDistance, 0) + 1;
+                break;
+            default:
+                $maxDistance = 1;
+                break;
         }
         $strArr = $this->splitStr($str);
         $strLength = count($strArr);
         $isSensitive = false;
-        for ($i = 0; $i < $strLength; $i++) {
-            //判断当前敏感字是否有存在对应节点
-            $curChar = $strArr[$i];
+        foreach ($strArr as $i => $iValue) {
+            // Check whether the current sensitive word has corresponding nodes
+            $curChar = $iValue;
             if (!isset($this->dict[$curChar])) {
                 continue;
             }
-            $isSensitive = true; //引用匹配到的敏感词节点
             $curNode = &$this->dict[$curChar];
             $dist = 0;
-            $matchIndex = [$i]; //匹配后续字符串是否match剩余敏感词
+            $matchIndex = [$i];
+            // Matches whether the following string matches the remaining sensitive words
             for ($j = $i + 1; $j < $strLength && $dist < $maxDistance; $j++) {
                 if (!isset($curNode[$strArr[$j]])) {
-                    $dist++; continue;
+                    $dist++;
+                    continue;
                 }
-                //如果匹配到的话，则把对应的字符所在位置存储起来，便于后续敏感词替换
+                // If a match is found, the corresponding character location is stored for subsequent substitution of sensitive words
                 $matchIndex[] = $j;
-                //继续引用
                 $curNode = &$curNode[$strArr[$j]];
             }
 
-            //判断是否已经到敏感词字典结尾，是的话，进行敏感词替换
+            // Determine if you have reached the end of the sensitive word dictionary. If so, replace the sensitive word
             if (isset($curNode['end']) && $isReplace) {
+                $isSensitive = true;
                 foreach ($matchIndex as $index) {
                     $strArr[$index] = $replace;
                 }
-                $i = max($matchIndex);
             }
         }
         if ($isReplace) {
