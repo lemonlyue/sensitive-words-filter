@@ -1,8 +1,10 @@
 <h1 align="center"> sensitive-words-filter </h1>
 
-<p align="center"> 基于PHP敏感词过滤</p>
+<p align="center"> 基于PHP敏感词过滤 </p>
 
 ![](https://img.shields.io/travis/com/lemonlyue/sensitive-words-filter)
+
+（重构中...）
 
 ## 安装
 
@@ -63,9 +65,6 @@ mlgb
 | skipDistance | int | 4 | | 允许敏感词跳过的最大距离，如笨aa蛋a傻瓜等等 |
 | isReplace | bool | true | | 是否需要替换，不需要的话，返回是否有敏感词，否则返回被替换的字符串 |
 | replace | string | * | | 替换字符 |
-
-## 参考
-https://segmentfault.com/a/1190000019137933
 
 ## License
 
